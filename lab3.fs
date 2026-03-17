@@ -1,4 +1,4 @@
-﻿open System
+open System
 open System.IO
 
 // Проверка диапазона (цифра)
@@ -6,54 +6,30 @@ let rec validDigit () =
 
     let input = Console.ReadLine()
 
-    match 
-        Int32.TryParse(input) 
-    with
+    match Int32.TryParse(input) with
     | true, number when number >= 0 && number <= 9 -> 
         number
     | _ -> 
         printfn "Введены неверные данные. Повторите ввод (0-9): "
         validDigit()
 
-// Создание последовательности
-let rec createSeq () =
-    printf "Введите целые числа через пробел: "
+let rec validNumber () =
+    printf "Введите число: "
     let input = Console.ReadLine()
-    
-    let elements = 
-        input.Split(' ') 
-        |> Array.filter (fun s -> s.Trim() <> "")
-        |> Array.toSeq 
-    
-    let flag, validValues = 
-        elements
-        |> Seq.fold (fun (isValid, acc) s ->
-            match Int32.TryParse(s.Trim()) with
-            | true, value -> 
-                (isValid, Seq.append acc (Seq.singleton value))
-            | false, _ -> 
-                printfn "Ошибка: '%s' не является целым числом" s
-                (false, acc)  
-        ) (true, Seq.empty<int>) 
-    
-    if flag then
-        validValues 
-    else
-        printfn "Введите данные заново"
-        createSeq()
 
-// Последовательность последних цифр
-let lastDigits (numbers) =
+    match Int32.TryParse(input) with
+    | true, number when number >= -999999999 && number <= 999999999 -> 
+        number
+    | _ -> 
+        printfn "Введены неверные данные. Повторите ввод: "
+        validNumber()
+
+// Создание последовательности
+let createSeq () =
+    printf "Введите длину последовательности: \n"
+    let n = validNumber ()
+    let numbers = seq {for i in 1..n do yield validNumber()}
     numbers
-    |> Seq.map (fun x -> abs x % 10)
-
-// Сумма чисел с заданной последней цифрой
-let sumLastDigit (numbers) digit =
-    numbers 
-    |> Seq.fold (fun acc x -> 
-        if abs x % 10 = digit 
-        then acc + x
-        else acc) 0
 
 let findNonTXT (rootDirectory: string) : seq<string> =
     let rec getAllFiles (dir: string) = seq {
@@ -94,23 +70,38 @@ let main _ =
     let ch = int (Console.ReadLine())
     match ch with
     | 1 ->
-        let seqNumbers = createSeq()
-        printfn "Введенная последовательность: %A" seqNumbers
-        let seqLast = lastDigits seqNumbers
-        printfn "Последовательность последних цифр: %A" seqLast
+        printfn "Нахождение последовательности последних цифр"
+    
+        let numbers = createSeq() 
+    
+        let result = 
+            numbers 
+            |> Seq.map (fun x -> abs x % 10) 
+            |> Seq.toList
+    
+        printfn "Последние цифры: %A" result
 
     | 2 ->
-        let seqNumbers = createSeq()
-        printfn "Введенная последовательность: %A" seqNumbers
-        printf "Введите цифру: "
+        let numbers = createSeq()
+    
+        printfn "Введите цифру (0-9): "
         let digit = validDigit()
-        let sumLast = sumLastDigit seqNumbers digit
-        printfn "Сумма чисел: %A" sumLast 
+    
+        let result = 
+            Seq.fold 
+                (fun sum x -> 
+                    if abs x % 10 = digit then
+                        sum + x 
+                    else 
+                        sum) 
+                0 numbers
+    
+        printfn "Сумма элементов, оканчивающихся на %d: %d" digit result
     | 3 -> 
         printf "Введите путь к каталогу: "
         let rootDir = Console.ReadLine()
         let result = findNonTXT rootDir
-        printfn "Последовательность файлов: %A" result 
+        printfn "Последовательность файлов: %A" result
     | 0 ->
         printf "Программа завершена."
 
